@@ -7,7 +7,11 @@ import os
 import shutil
 import re
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder="app/templates",
+    static_folder="app/static"
+)
 
 ROOT = Path(__file__).parent
 JOBS = ROOT / "app" / "data" / "jobs"
