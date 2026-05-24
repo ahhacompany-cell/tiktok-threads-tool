@@ -1,92 +1,85 @@
 \
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify
-from pathlib import Path
-from datetime import datetime
-import subprocess
+from flask import Flask, render_template, request, jsonify
+import hmac
+import hashlib
+import datetime
+import requests
 import os
-import shutil
-import re
 
-app = Flask(
-    __name__,
-    template_folder="app/templates",
-    static_folder="app/static"
-)
-
-ROOT = Path(__file__).parent
-JOBS = ROOT / "app" / "data" / "jobs"
-JOBS.mkdir(parents=True, exist_ok=True)
+app = Flask(__name__, template_folder="templates", static_folder="static")
 
 GPTS_URL = "https://chatgpt.com/g/g-69ef95c18ff081918a267dcbd722305f-sseuredeu-ni-daeboni-nae-daebonida"
-GOOGLE_LENS_URL = "https://lens.google.com/"
+LENS_URL = "https://lens.google.com/"
+TIKVIDEO_URL = "https://tikvideo.app/ko"
 
-def safe_job_name():
-    return datetime.now().strftime("%Y%m%d_%H%M%S") + "_tiktok"
-
-def make_job_dirs(job_dir: Path):
-    for name in ["video", "frames", "links", "notes"]:
-        (job_dir / name).mkdir(parents=True, exist_ok=True)
-
-def run(cmd):
-    return subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def make_auth(access_key, secret_key, method, path, query=""):
+    now = datetime.datetime.utcnow()
+    signed_date = now.strftime("%y%m%dT%H%M%SZ")
+    message = signed_date + method + path + query
+    signature = hmac.new(
+        secret_key.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+    return (
+        "CEA algorithm=HmacSHA256, "
+        f"access-key={access_key}, "
+        f"signed-date={signed_date}, "
+        f"signature={signature}"
+    )
 
 @app.route("/")
 def index():
-    jobs = sorted([p.name for p in JOBS.iterdir() if p.is_dir()], reverse=True)
-    return render_template("index.html", jobs=jobs, gpts_url=GPTS_URL, lens_url=GOOGLE_LENS_URL)
+    return render_template("index.html", gpts_url=GPTS_URL, lens_url=LENS_URL, tikvideo_url=TIKVIDEO_URL)
 
-@app.route("/create", methods=["POST"])
-def create():
-    tiktok_url = request.form.get("tiktok_url", "").strip()
-    if not tiktok_url:
-        return redirect(url_for("index"))
+@app.route("/api/deeplink", methods=["POST"])
+def deeplink():
+    data = request.get_json(force=True)
+    access_key = (data.get("accessKey") or "").strip()
+    secret_key = (data.get("secretKey") or "").strip()
+    coupang_url = (data.get("coupangUrl") or "").strip()
 
-    job_name = safe_job_name()
-    job_dir = JOBS / job_name
-    make_job_dirs(job_dir)
+    if not access_key or not secret_key or not coupang_url:
+        return jsonify({"ok": False, "error": "Access Key, Secret Key, 쿠팡 링크를 모두 입력하세요."}), 400
 
-    (job_dir / "links" / "source_tiktok.txt").write_text(tiktok_url, encoding="utf-8")
+    method = "POST"
+    path = "/v2/providers/affiliate_open_api/apis/openapi/v1/deeplink"
+    url = "https://api-gateway.coupang.com" + path
 
-    video_path = job_dir / "video" / "source.mp4"
+    headers = {
+        "Authorization": make_auth(access_key, secret_key, method, path),
+        "Content-Type": "application/json",
+    }
 
-    # Download TikTok video with simple safe filename
-    cmd = f'python -m yt_dlp -o "{video_path}" "{tiktok_url}"'
-    result = run(cmd)
-    (job_dir / "notes" / "download_log.txt").write_text(result.stdout, encoding="utf-8", errors="ignore")
+    payload = {"coupangUrls": [coupang_url]}
 
-    # Extract 6 frames. Requires ffmpeg available in yt-dlp environment or system PATH.
-    frames_dir = job_dir / "frames"
-    ffmpeg_cmd = f'ffmpeg -y -i "{video_path}" -vf "fps=1" -vframes 6 "{frames_dir / "frame%d.jpg"}"'
-    frame_result = run(ffmpeg_cmd)
-    (job_dir / "notes" / "frames_log.txt").write_text(frame_result.stdout, encoding="utf-8", errors="ignore")
+    try:
+        r = requests.post(url, headers=headers, json=payload, timeout=15)
+        try:
+            body = r.json()
+        except Exception:
+            body = {"raw": r.text}
 
-    return redirect(url_for("job", job=job_name))
+        if not r.ok:
+            return jsonify({"ok": False, "status": r.status_code, "error": body}), r.status_code
 
-@app.route("/job/<job>")
-def job(job):
-    job_dir = JOBS / job
-    frames = []
-    frames_dir = job_dir / "frames"
-    if frames_dir.exists():
-        frames = sorted([p.name for p in frames_dir.glob("*.jpg")])
-    coupang = (job_dir / "links" / "coupang.txt").read_text(encoding="utf-8") if (job_dir / "links" / "coupang.txt").exists() else ""
-    coupas = (job_dir / "links" / "coupas.txt").read_text(encoding="utf-8") if (job_dir / "links" / "coupas.txt").exists() else ""
-    memo = (job_dir / "notes" / "memo.txt").read_text(encoding="utf-8") if (job_dir / "notes" / "memo.txt").exists() else ""
-    return render_template("job.html", job=job, frames=frames, coupang=coupang, coupas=coupas, memo=memo, gpts_url=GPTS_URL, lens_url=GOOGLE_LENS_URL)
+        item = None
+        if isinstance(body, dict):
+            data_list = body.get("data")
+            if isinstance(data_list, list) and data_list:
+                item = data_list[0]
 
-@app.route("/job/<job>/save_links", methods=["POST"])
-def save_links(job):
-    job_dir = JOBS / job
-    make_job_dirs(job_dir)
-    (job_dir / "links" / "coupang.txt").write_text(request.form.get("coupang", "").strip(), encoding="utf-8")
-    (job_dir / "links" / "coupas.txt").write_text(request.form.get("coupas", "").strip(), encoding="utf-8")
-    (job_dir / "notes" / "memo.txt").write_text(request.form.get("memo", "").strip(), encoding="utf-8")
-    return redirect(url_for("job", job=job))
+        short_url = ""
+        if isinstance(item, dict):
+            short_url = item.get("shortenUrl") or item.get("landingUrl") or ""
 
-@app.route("/data/jobs/<job>/frames/<filename>")
-def frame_file(job, filename):
-    return send_from_directory(JOBS / job / "frames", filename)
+        if not short_url:
+            return jsonify({"ok": False, "error": "쿠파스 링크를 찾지 못했습니다.", "response": body}), 500
+
+        return jsonify({"ok": True, "coupasUrl": short_url, "response": body})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port)

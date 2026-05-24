@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Threads Coupas Tool</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>Threads Tool</h1>
+    <p class="desc">틱톡 다운로드 → 구글 렌즈 → 쿠파스 링크 → 내 GPTs</p>
+
+    <section class="card">
+      <h2>1. 빠른 실행</h2>
+      <a class="btn" href="{{ tikvideo_url }}" target="_blank">틱톡 다운로드 열기</a>
+      <a class="btn secondary" href="{{ lens_url }}" target="_blank">구글 렌즈 열기</a>
+      <a class="btn secondary" href="{{ gpts_url }}" target="_blank">내 GPTs 열기</a>
+    </section>
+
+    <section class="card">
+      <h2>2. 쿠파스 API</h2>
+      <label>Access Key</label>
+      <input id="accessKey" type="password" placeholder="Access Key">
+
+      <label>Secret Key</label>
+      <input id="secretKey" type="password" placeholder="Secret Key">
+
+      <div class="row">
+        <button id="saveKeys">API 저장</button>
+        <button id="clearKeys" class="light">API 지우기</button>
+      </div>
+      <p class="muted" id="keyStatus">저장하지 않으면 이번 화면에서만 사용됩니다.</p>
+    </section>
+
+    <section class="card">
+      <h2>3. 쿠파스 링크 생성</h2>
+      <label>쿠팡 상품 링크</label>
+      <textarea id="coupangUrl" placeholder="쿠팡 상품 링크 붙여넣기"></textarea>
+
+      <button id="generateBtn">쿠파스 링크 생성</button>
+
+      <label>쿠파스 링크</label>
+      <textarea id="coupasUrl" placeholder="생성된 링크"></textarea>
+
+      <div class="row">
+        <button id="copyBtn">복사</button>
+        <button id="clearLinks" class="light">링크 지우기</button>
+      </div>
+      <p class="muted" id="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>4. 메모</h2>
+      <textarea id="memo" placeholder="상품명, 특징, 업로드 메모"></textarea>
+      <div class="row">
+        <button id="saveMemo">메모 저장</button>
+        <button id="clearMemo" class="light">메모 지우기</button>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
