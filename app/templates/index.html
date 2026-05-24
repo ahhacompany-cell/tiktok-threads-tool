@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TikTok Threads Mobile Tool</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <h1>TikTok Threads Tool</h1>
+    <section class="card">
+      <h2>새 작업 만들기</h2>
+      <form action="/create" method="post">
+        <label>틱톡 링크</label>
+        <textarea name="tiktok_url" placeholder="https://vt.tiktok.com/..." required></textarea>
+        <button type="submit">다운로드 + 프레임 추출</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>최근 작업</h2>
+      {% if jobs %}
+        <div class="list">
+        {% for job in jobs %}
+          <a class="job" href="/job/{{job}}">{{job}}</a>
+        {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">아직 작업이 없습니다.</p>
+      {% endif %}
+    </section>
+
+    <section class="row">
+      <a class="btn secondary" href="{{lens_url}}" target="_blank">구글 렌즈 열기</a>
+      <a class="btn secondary" href="{{gpts_url}}" target="_blank">내 GPTs 열기</a>
+    </section>
+  </main>
+</body>
+</html>

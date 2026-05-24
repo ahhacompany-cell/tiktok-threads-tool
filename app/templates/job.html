@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{job}}</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="/">← 작업 목록</a>
+    <h1>{{job}}</h1>
+
+    <section class="card">
+      <h2>프레임</h2>
+      {% if frames %}
+        <div class="grid">
+        {% for frame in frames %}
+          <a href="/data/jobs/{{job}}/frames/{{frame}}" target="_blank">
+            <img src="/data/jobs/{{job}}/frames/{{frame}}" alt="{{frame}}">
+            <span>{{frame}}</span>
+          </a>
+        {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">프레임이 없습니다. ffmpeg 설치가 필요할 수 있습니다.</p>
+      {% endif %}
+    </section>
+
+    <section class="row">
+      <a class="btn secondary" href="{{lens_url}}" target="_blank">구글 렌즈 열기</a>
+      <a class="btn secondary" href="{{gpts_url}}" target="_blank">내 GPTs 열기</a>
+    </section>
+
+    <section class="card">
+      <h2>링크/메모 저장</h2>
+      <form action="/job/{{job}}/save_links" method="post">
+        <label>쿠팡 링크</label>
+        <textarea name="coupang" placeholder="쿠팡 상품 링크">{{coupang}}</textarea>
+
+        <label>쿠파스 링크</label>
+        <textarea name="coupas" placeholder="쿠파스 변환 링크">{{coupas}}</textarea>
+
+        <label>상품 메모</label>
+        <textarea name="memo" placeholder="예: 수도꼭지 필터 / 녹 이물질 걸러줌">{{memo}}</textarea>
+
+        <button type="submit">저장</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
