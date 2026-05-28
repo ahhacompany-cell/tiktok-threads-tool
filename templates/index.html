@@ -15,15 +15,18 @@
     <section class="card">
       <h2>1. 빠른 실행</h2>
       <a class="btn" href="{{ tikvideo_url }}" target="_blank">틱톡 다운로드 열기</a>
+      <a class="btn secondary" href="{{ threads_download_url }}" target="_blank">Threads 다운로드 열기</a>
       <a class="btn secondary" href="{{ lens_url }}" target="_blank">구글 렌즈 열기</a>
       <a class="btn secondary" href="{{ gpts_url }}" target="_blank">내 GPTs 열기</a>
     </section>
 
     <section class="card">
       <h2>2. 쿠파스 API</h2>
-<input id="accessKey" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access Key">
+      <label>Access Key</label>
+      <input id="accessKey" type="password" placeholder="Access Key">
 
-<input id="secretKey" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Secret Key">
+      <label>Secret Key</label>
+      <input id="secretKey" type="password" placeholder="Secret Key">
 
       <div class="row">
         <button id="saveKeys">API 저장</button>

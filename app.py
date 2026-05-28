@@ -11,6 +11,7 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 GPTS_URL = "https://chatgpt.com/g/g-69ef95c18ff081918a267dcbd722305f-sseuredeu-ni-daeboni-nae-daebonida"
 LENS_URL = "https://lens.google.com/"
 TIKVIDEO_URL = "https://tikvideo.app/ko"
+THREADS_DOWNLOAD_URL = "https://threadsdownloader.com/"
 
 def make_auth(access_key, secret_key, method, path, query=""):
     now = datetime.datetime.utcnow()
@@ -30,7 +31,7 @@ def make_auth(access_key, secret_key, method, path, query=""):
 
 @app.route("/")
 def index():
-    return render_template("index.html", gpts_url=GPTS_URL, lens_url=LENS_URL, tikvideo_url=TIKVIDEO_URL)
+    return render_template("index.html", gpts_url=GPTS_URL, lens_url=LENS_URL, tikvideo_url=TIKVIDEO_URL, threads_download_url=THREADS_DOWNLOAD_URL)
 
 @app.route("/api/deeplink", methods=["POST"])
 def deeplink():
